@@ -12,7 +12,7 @@
 ## 色の参照先
 
 - シンデレラガールズ
-  - [アイドルマスター シンデレラガールズ｜公式ポータルサイト](view-source:https://cinderellagirls.idolmaster-official.jp/)
+  - [アイドルマスター シンデレラガールズ｜公式ポータルサイト](https://cinderellagirls.idolmaster-official.jp/)
 - ミリオンライブ
   - [アニメ『アイドルマスター ミリオンライブ！』公式サイト](https://millionlive-anime.idolmaster-official.jp/)
 - 学園アイドルマスター
