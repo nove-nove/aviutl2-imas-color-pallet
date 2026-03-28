@@ -1,0 +1,65 @@
+name: Release ZIP
+
+on:
+  push:
+    tags:
+      - "*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set package metadata
+        shell: pwsh
+        run: |
+          $archiveName = "${{ github.event.repository.name }}.zip"
+          "ARCHIVE_NAME=$archiveName" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Stage release files
+        shell: pwsh
+        run: |
+          $stagingRoot = Join-Path $env:RUNNER_TEMP "release"
+
+          if (Test-Path -LiteralPath $stagingRoot) {
+            Remove-Item -LiteralPath $stagingRoot -Recurse -Force
+          }
+
+          New-Item -ItemType Directory -Path $stagingRoot -Force | Out-Null
+
+          Get-ChildItem -LiteralPath $env:GITHUB_WORKSPACE -Force |
+            Where-Object { $_.Name -notin @(".git", ".github") } |
+            ForEach-Object {
+              Copy-Item -LiteralPath $_.FullName -Destination $stagingRoot -Recurse -Force
+            }
+
+      - name: Create ZIP archive
+        shell: pwsh
+        run: |
+          $stagingRoot = Join-Path $env:RUNNER_TEMP "release"
+          $archivePath = Join-Path $env:RUNNER_TEMP $env:ARCHIVE_NAME
+          $archiveItems = Get-ChildItem -LiteralPath $stagingRoot -Force
+
+          if (Test-Path -LiteralPath $archivePath) {
+            Remove-Item -LiteralPath $archivePath -Force
+          }
+
+          if ($archiveItems.Count -eq 0) {
+            throw "No files were staged for release."
+          }
+
+          Compress-Archive -LiteralPath $archiveItems.FullName -DestinationPath $archivePath -Force
+          "ARCHIVE_PATH=$archivePath" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ env.ARCHIVE_PATH }}
+          generate_release_notes: true
+          fail_on_unmatched_files: true
